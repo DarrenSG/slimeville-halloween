@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -10,6 +14,15 @@ body {
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+.btn {
+  border: 2px solid rgba(156, 163, 175, var(--tw-border-opacity)) !important;
+  height: 56px !important;
+  @apply flex justify-center items-center border-2 border-gray-400 w-56 rounded bg-gray-300 text-gray-800 text-2xl font-bold italic font-sans !important;
+}
+
+.btn.Mui-disabled {
+  opacity: 0.6 !important;
 }

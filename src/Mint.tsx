@@ -8,7 +8,7 @@ import * as anchor from "@project-serum/anchor";
 
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 
-import { useAnchorWallet } from "@solana/wallet-adapter-react";
+import { AnchorWallet, useAnchorWallet } from "@solana/wallet-adapter-react";
 import { WalletDialogButton } from "@solana/wallet-adapter-material-ui";
 
 import {
@@ -18,6 +18,7 @@ import {
   mintOneToken,
   shortenAddress,
 } from "./candy-machine";
+import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 
 const ConnectButton = styled(WalletDialogButton)``;
 
@@ -27,7 +28,7 @@ const MintContainer = styled.div``; // add your styles here
 
 const MintButton = styled(Button)``; // add your styles here
 
-export interface HomeProps {
+export interface MintProps {
   candyMachineId: anchor.web3.PublicKey;
   config: anchor.web3.PublicKey;
   connection: anchor.web3.Connection;
@@ -36,11 +37,13 @@ export interface HomeProps {
   txTimeout: number;
 }
 
-const Home = (props: HomeProps) => {
+const Mint = (props: MintProps) => {
   const [balance, setBalance] = useState<number>();
   const [isActive, setIsActive] = useState(false); // true when countdown completes
   const [isSoldOut, setIsSoldOut] = useState(false); // true when items remaining is zero
   const [isMinting, setIsMinting] = useState(false); // true when user got to press MINT
+  const [overLimit, setOverLimit] = useState(false); // true when user has already own 1 or more token
+  const [isLoading, setIsLoading] = useState(true); // do not show the mint button until all prepared
 
   const [itemsAvailable, setItemsAvailable] = useState(0);
   const [itemsRedeemed, setItemsRedeemed] = useState(0);
@@ -57,10 +60,15 @@ const Home = (props: HomeProps) => {
   const wallet = useAnchorWallet();
   const [candyMachine, setCandyMachine] = useState<CandyMachine>();
 
+  const getWalletTokenCount = async (wallet: AnchorWallet): Promise<Number> => {
+    const res = await props.connection.getTokenAccountsByOwner(wallet.publicKey, { programId: TOKEN_PROGRAM_ID });
+    return res.value.length;
+  }
+
   const refreshCandyMachineState = () => {
     (async () => {
       if (!wallet) return;
-
+      setIsLoading(true);
       const {
         candyMachine,
         goLiveDate,
@@ -79,7 +87,9 @@ const Home = (props: HomeProps) => {
 
       setIsSoldOut(itemsRemaining === 0);
       setStartDate(goLiveDate);
+      setOverLimit((await getWalletTokenCount(wallet)) > 0);
       setCandyMachine(candyMachine);
+      setIsLoading(false);
     })();
   };
 
@@ -154,6 +164,7 @@ const Home = (props: HomeProps) => {
     (async () => {
       if (wallet) {
         const balance = await props.connection.getBalance(wallet.publicKey);
+
         setBalance(balance / LAMPORTS_PER_SOL);
       }
     })();
@@ -167,43 +178,52 @@ const Home = (props: HomeProps) => {
 
   return (
     <main>
-      {wallet && (
-        <p>Wallet {shortenAddress(wallet.publicKey.toBase58() || "")}</p>
-      )}
+      {wallet ? (
+        <div className="border-2 rounded border-gray-400 px-4 py-2 mb-4">
+          {wallet && (
+            <p>Wallet {shortenAddress(wallet.publicKey.toBase58() || "")}</p>
+          )}
 
-      {wallet && <p>Balance: {(balance || 0).toLocaleString()} SOL</p>}
+          {wallet && <p>Balance: {(balance || 0).toLocaleString()} SOL</p>}
 
-      {wallet && <p>Total Available: {itemsAvailable}</p>}
+          {wallet && <p>Total Available: {itemsAvailable}</p>}
 
-      {wallet && <p>Redeemed: {itemsRedeemed}</p>}
+          {wallet && <p>Redeemed: {itemsRedeemed}</p>}
 
-      {wallet && <p>Remaining: {itemsRemaining}</p>}
+          {wallet && <p>Remaining: {itemsRemaining}</p>}
+        </div>
+      ) : ''}
 
       <MintContainer>
         {!wallet ? (
-          <ConnectButton>Connect Wallet</ConnectButton>
+          <ConnectButton className="btn">Connect Wallet</ConnectButton>
         ) : (
           <MintButton
-            disabled={isSoldOut || isMinting || !isActive}
+            className="btn"
+            disabled={isLoading || isSoldOut || isMinting || !isActive || overLimit}
             onClick={onMint}
             variant="contained"
           >
-            {isSoldOut ? (
-              "SOLD OUT"
-            ) : isActive ? (
-              isMinting ? (
-                <CircularProgress />
-              ) : (
-                "MINT"
+            {
+              isLoading ? (<CircularProgress />) : (
+                isSoldOut ? (
+                  "SOLD OUT"
+                ) : isActive ? (
+                  isMinting ? (
+                    <CircularProgress />
+                  ) : (
+                    overLimit ? "OVER LIMIT" : "MINT"
+                  )
+                ) : (
+                  <Countdown
+                    date={startDate}
+                    onMount={({ completed }) => completed && setIsActive(true)}
+                    onComplete={() => setIsActive(true)}
+                    renderer={renderCounter}
+                  />
+                )
               )
-            ) : (
-              <Countdown
-                date={startDate}
-                onMount={({ completed }) => completed && setIsActive(true)}
-                onComplete={() => setIsActive(true)}
-                renderer={renderCounter}
-              />
-            )}
+            }
           </MintButton>
         )}
       </MintContainer>
@@ -238,4 +258,4 @@ const renderCounter = ({ days, hours, minutes, seconds, completed }: any) => {
   );
 };
 
-export default Home;
+export default Mint;
