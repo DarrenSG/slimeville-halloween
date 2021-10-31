@@ -174,6 +174,7 @@ const Mint = (props: MintProps) => {
     wallet,
     props.candyMachineId,
     props.connection,
+    getWalletTokenCount,
   ]);
 
   return (
