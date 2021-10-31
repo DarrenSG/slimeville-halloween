@@ -8,7 +8,7 @@ import * as anchor from "@project-serum/anchor";
 
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 
-import { AnchorWallet, useAnchorWallet } from "@solana/wallet-adapter-react";
+import { useAnchorWallet } from "@solana/wallet-adapter-react";
 import { WalletDialogButton } from "@solana/wallet-adapter-material-ui";
 
 import {
@@ -60,11 +60,6 @@ const Mint = (props: MintProps) => {
   const wallet = useAnchorWallet();
   const [candyMachine, setCandyMachine] = useState<CandyMachine>();
 
-  const getWalletTokenCount = async (wallet: AnchorWallet): Promise<Number> => {
-    const res = await props.connection.getTokenAccountsByOwner(wallet.publicKey, { programId: TOKEN_PROGRAM_ID });
-    return res.value.length;
-  }
-
   const refreshCandyMachineState = () => {
     (async () => {
       if (!wallet) return;
@@ -87,8 +82,12 @@ const Mint = (props: MintProps) => {
 
       setIsSoldOut(itemsRemaining === 0);
       setStartDate(goLiveDate);
-      setOverLimit((await getWalletTokenCount(wallet)) > 0);
       setCandyMachine(candyMachine);
+
+      const res = await props.connection.getTokenAccountsByOwner(wallet.publicKey, { programId: TOKEN_PROGRAM_ID });
+      const tokenCount = res.value.length;
+      setOverLimit(tokenCount > 0);
+
       setIsLoading(false);
     })();
   };
@@ -174,7 +173,6 @@ const Mint = (props: MintProps) => {
     wallet,
     props.candyMachineId,
     props.connection,
-    getWalletTokenCount,
   ]);
 
   return (

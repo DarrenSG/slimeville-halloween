@@ -12,10 +12,10 @@ const Halloween = (props: any) => {
       <nav className="py-4 px-6 flex justify-between w-full lg:fixed top-0 left-0 right-0">
         <h1 className="text-2xl font-medium leading-none">weareslimes.com</h1>
         <div className="flex space-x-3 pt-1">
-          <a href="https://twitter.com/WeAreSlimes" target="_blank">
+          <a href="https://twitter.com/WeAreSlimes" target="_blank" rel="noreferrer">
             <img src={twitter} alt="Twitter" className="w-7" />
           </a>
-          <a href="https://discord.gg/5zwUs38P9q" target="_blank">
+          <a href="https://discord.gg/5zwUs38P9q" target="_blank" rel="noreferrer">
             <img src={discord} alt="Discord" className="w-7" />
           </a>
         </div>
