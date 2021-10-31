@@ -251,8 +251,8 @@ interface AlertState {
 
 const renderCounter = ({ days, hours, minutes, seconds, completed }: any) => {
   return (
-    <CounterText>
-      {hours + (days || 0) * 24} hours, {minutes} minutes, {seconds} seconds
+    <CounterText className="text-base leading-none">
+      {hours + (days || 0) * 24} hours, {minutes} minutes, {seconds} seconds until mint starts
     </CounterText>
   );
 };
